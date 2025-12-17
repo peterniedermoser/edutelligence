@@ -393,6 +393,57 @@ def run_communication_tutor_suggestions_pipeline(
     thread.start()
 
 
+def run_prompt_user_pipeline_worker(
+        dto: ExerciseChatPipelineExecutionDTO,
+        variant_id: str,
+        event: str | None = None,
+):
+    try:
+        callback = ExerciseChatStatusCallback(
+            run_id=dto.settings.authentication_token,
+            base_url=dto.settings.artemis_base_url,
+            initial_stages=dto.initial_stages,
+        )
+        pipeline = ExerciseChatAgentPipeline()
+    except Exception as e:
+        logger.error("Error preparing exercise chat pipeline: %s", e)
+        logger.error(traceback.format_exc())
+        capture_exception(e)
+        return
+
+    try:
+        for variant in ExerciseChatAgentPipeline.get_variants():
+            if variant.id == variant_id:
+                break
+        else:
+            raise ValueError(f"Unknown variant: {variant_id}")
+
+        pipeline(dto=dto, variant=variant, callback=callback, event=event)
+    except Exception as e:
+        logger.error("Error running exercise chat pipeline: %s", e)
+        logger.error(traceback.format_exc())
+        callback.error("Fatal error.", exception=e)
+
+
+@router.post(
+    "/programming-exercise-chat/run",
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(TokenValidator())],
+)
+def run_prompt_user_pipeline(
+        event: str | None = Query(None, description="Event query parameter"),
+        dto: ExerciseChatPipelineExecutionDTO = Body(
+            description="Exercise Chat Pipeline Execution DTO"
+        ),
+):
+    variant = validate_pipeline_variant(dto.settings, ExerciseChatAgentPipeline)
+    thread = Thread(
+        target=run_exercise_chat_pipeline_worker,
+        args=(dto, variant, event),
+    )
+    thread.start()
+
+
 @router.get("/{feature}/variants")
 def get_pipeline(feature: str) -> list[FeatureDTO]:
     """
