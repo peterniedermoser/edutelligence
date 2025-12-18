@@ -17,6 +17,7 @@ from iris.domain import (
 from iris.domain.chat.lecture_chat.lecture_chat_pipeline_execution_dto import (
     LectureChatPipelineExecutionDTO,
 )
+from iris.domain.chat.prompt_user_chat.prompt_user_chat_pipeline_execution_dto import PromptUserChatPipelineExecutionDTO
 from iris.domain.communication.communication_tutor_suggestion_pipeline_execution_dto import (
     CommunicationTutorSuggestionPipelineExecutionDTO,
 )
@@ -34,6 +35,7 @@ from iris.pipeline.chat.exercise_chat_agent_pipeline import (
     ExerciseChatAgentPipeline,
 )
 from iris.pipeline.chat.lecture_chat_pipeline import LectureChatPipeline
+from iris.pipeline.chat.prompt_user_agent_pipeline import PromptUserAgentPipeline
 from iris.pipeline.chat.text_exercise_chat_pipeline import TextExerciseChatPipeline
 from iris.pipeline.competency_extraction_pipeline import (
     CompetencyExtractionPipeline,
@@ -394,17 +396,17 @@ def run_communication_tutor_suggestions_pipeline(
 
 
 def run_prompt_user_pipeline_worker(
-        dto: ExerciseChatPipelineExecutionDTO,
+        dto: PromptUserChatPipelineExecutionDTO,
         variant_id: str,
         event: str | None = None,
 ):
     try:
-        callback = ExerciseChatStatusCallback(
+        callback = PrompUserStatusCallback(
             run_id=dto.settings.authentication_token,
             base_url=dto.settings.artemis_base_url,
             initial_stages=dto.initial_stages,
         )
-        pipeline = ExerciseChatAgentPipeline()
+        pipeline = PromptUserAgentPipeline()
     except Exception as e:
         logger.error("Error preparing exercise chat pipeline: %s", e)
         logger.error(traceback.format_exc())
@@ -412,7 +414,7 @@ def run_prompt_user_pipeline_worker(
         return
 
     try:
-        for variant in ExerciseChatAgentPipeline.get_variants():
+        for variant in PromptUserAgentPipeline.get_variants():
             if variant.id == variant_id:
                 break
         else:
@@ -438,7 +440,7 @@ def run_prompt_user_pipeline(
 ):
     variant = validate_pipeline_variant(dto.settings, ExerciseChatAgentPipeline)
     thread = Thread(
-        target=run_exercise_chat_pipeline_worker,
+        target=run_prompt_user_pipeline_worker,
         args=(dto, variant, event),
     )
     thread.start()
