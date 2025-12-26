@@ -122,11 +122,17 @@ class MemirisWrapper:
     """
 
     def __init__(self, weaviate_client: WeaviateClient, tenant: Tenant):
+
+        print("hallo abstractpipeline beginn memiris wrapper")
+
         self.vectorizer = Vectorizer(_memiris_embedding_models, OllamaService())
         self.memory_creation_pipeline = memiris_create_user_memory_creation_pipeline(
             weaviate_client
         )
         self.learning_service = LearningService(weaviate_client)
+
+        print("hallo abstractpipeline mitte memiris wrapper")
+
         self.memory_service = MemoryService(weaviate_client)
         self.memory_connection_service = MemoryConnectionService(weaviate_client)
         self.tenant = tenant
