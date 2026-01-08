@@ -26,6 +26,9 @@ class VectorDatabase:
     _client_instance = None
 
     def __init__(self):
+
+        print("Real VectorDatabase is in use!")
+
         with VectorDatabase._lock:
             if not VectorDatabase._client_instance:
                 VectorDatabase._client_instance = weaviate.connect_to_local(
