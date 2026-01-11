@@ -21,6 +21,14 @@ with open(APPLICATION_YML_PATH, "r") as f:
     config = yaml.safe_load(f)
 WEAVIATE_HOST = config["test"]["weaviate"]["host"]
 
+TESTS_IN_DOCKER = WEAVIATE_HOST == "weaviate_test"
+
+# maybe this is a solution to patch before all imports? -> better google how to monkeypatch before all imports in python
+#patcher = patch(
+#    "iris.vector_database.database.weaviate.connect_to_local",
+#    lambda *args, **kwargs: weaviate_client
+#)
+#patcher.start()
 
 
 @pytest.fixture(scope="session")
@@ -47,7 +55,6 @@ def weaviate_container():
     container.stop()
 
 
-
 import time
 import requests
 
@@ -66,13 +73,13 @@ def wait_for_weaviate(port, timeout=30):
 
 @pytest.fixture(scope="session")
 def weaviate_client(weaviate_container):
-
-    if wait_for_weaviate(int(weaviate_container.get_exposed_port(8001))):
+    if wait_for_weaviate(8001 if TESTS_IN_DOCKER else int(weaviate_container.get_exposed_port(8001))):
         client = weaviate.connect_to_local(
         host=WEAVIATE_HOST,
-        port=int(weaviate_container.get_exposed_port(8001)),
-        grpc_port=int(weaviate_container.get_exposed_port(50051)))
+        port=8001 if TESTS_IN_DOCKER else int(weaviate_container.get_exposed_port(8001)),
+        grpc_port=50051 if TESTS_IN_DOCKER else int(weaviate_container.get_exposed_port(50051)))
 
+        print("im in fake connect")
 
         yield client
 
@@ -83,8 +90,9 @@ def weaviate_client(weaviate_container):
 # Connect with Test DB instead of real one
 @pytest.fixture(autouse=True)
 def patch_weaviate_connect(weaviate_client):
+
     with patch(
-            "iris.vector_database.database.weaviate.connect_to_local",
-            return_value=weaviate_client,
-    ):
+            "iris.vector_database.database.weaviate.connect_to_local"
+    ) as mock_connect:
+        mock_connect.return_value = weaviate_client
         yield
