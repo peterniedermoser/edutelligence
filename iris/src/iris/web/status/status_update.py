@@ -3,6 +3,8 @@ from abc import ABC
 from typing import List, Optional
 
 import requests
+
+from iris.domain.chat.prompt_user_chat.prompt_user_chat_status_update_dto import PromptUserChatStatusUpdateDTO
 from memiris import Memory
 from memiris.api.memory_dto import MemoryDTO
 from sentry_sdk import capture_exception, capture_message
@@ -465,3 +467,29 @@ class TutorSuggestionCallback(StatusCallback):
             stages[stage],
             stage,
         )
+
+
+class PromptUserStatusCallback(StatusCallback):
+    """Status callback for prompt user pipelines."""
+
+    def __init__(
+            self, run_id: str, base_url: str, initial_stages: List[StageDTO] = None
+    ):
+        url = (
+            f"{base_url}/{self.api_url}/programming-exercise-prompt-user/runs/{run_id}/status"
+        )
+        current_stage_index = len(initial_stages) if initial_stages else 0
+        stages = initial_stages or []
+        stages += [
+            StageDTO(
+                weight=30,
+                state=StageStateEnum.NOT_STARTED,
+                name="Checking available information",
+            ),
+            StageDTO(
+                weight=10, state=StageStateEnum.NOT_STARTED, name="Thinking of question"
+            ),
+        ]
+        status = PromptUserChatStatusUpdateDTO(stages=stages)
+        stage = stages[current_stage_index]
+        super().__init__(url, run_id, status, stage, current_stage_index)
