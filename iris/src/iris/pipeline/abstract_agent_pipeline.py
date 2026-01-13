@@ -297,7 +297,6 @@ class AbstractAgentPipeline(ABC, Pipeline, Generic[DTO, VARIANT]):
         state = AgentPipelineExecutionState[DTO, VARIANT]()
         state.dto = dto
         state.db = VectorDatabase()
-        print("hallo abstractpipeline nach vector database in initializing execution state")
         state.variant = variant
         state.callback = callback
         state.memiris_memory_creation_thread = None
@@ -309,19 +308,13 @@ class AbstractAgentPipeline(ABC, Pipeline, Generic[DTO, VARIANT]):
         state.prompt = None
         state.tokens = []
 
-        print("hallo abstractpipeline vor memiris wrapper")
-
         state.memiris_wrapper = MemirisWrapper(
             state.db.client, self.get_memiris_tenant(state.dto)
         )
 
-        print("hallo abstractpipeline nach state init")
-
         # 1. Prepare message history, user query, LLM, prompt and tools
         state.message_history = self.get_recent_history_from_dto(state)
         user_query = self.get_text_of_latest_user_message(state)
-
-        print("hallo abstractpipeline vor LLM creation")
 
         # Create LLM from variant's agent_model
         completion_args = CompletionArguments(temperature=0.5, max_tokens=2000)
@@ -332,15 +325,11 @@ class AbstractAgentPipeline(ABC, Pipeline, Generic[DTO, VARIANT]):
             completion_args=completion_args,
         )
 
-        print("hallo abstractpipeline nach LLM creation")
-
         system_message = self.build_system_message(state)
         state.prompt = self.assemble_prompt_with_history(
             state=state, system_prompt=system_message
         )
         state.tools = self.get_tools(state)
-
-        print("hallo abstractpipeline nach get_tools")
 
 
         # 4. Start memory creation if enabled
@@ -350,8 +339,6 @@ class AbstractAgentPipeline(ABC, Pipeline, Generic[DTO, VARIANT]):
                     user_query, state.memiris_memory_creation_storage
                 )
             )
-
-        print("hallo abstractpipeline vor pre hook")
 
 
         # 7.1. Run pre agent hook
