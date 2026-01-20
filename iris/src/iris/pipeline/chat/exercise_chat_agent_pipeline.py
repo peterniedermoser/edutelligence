@@ -492,6 +492,9 @@ class ExerciseChatAgentPipeline(
 
             self.event = event
 
+            print(f"\n\n\nEvent payload: {dto.event_payload}\n\n")
+            print(f"\n\n\nevent: {event}\n\n")
+
             # Delegate to parent class for standardized execution
             super().__call__(dto, variant, callback)
 
