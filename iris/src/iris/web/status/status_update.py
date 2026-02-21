@@ -5,6 +5,7 @@ from typing import List, Optional
 import requests
 
 from iris.domain.chat.prompt_user_chat.prompt_user_chat_status_update_dto import PromptUserChatStatusUpdateDTO
+from iris.domain.data.verdict_dto import VerdictDTO
 from memiris import Memory
 from memiris.api.memory_dto import MemoryDTO
 from sentry_sdk import capture_exception, capture_message
@@ -121,6 +122,7 @@ class StatusCallback(ABC):
         start_next_stage: bool = True,
         inconsistencies: Optional[List[str]] = None,
         improvement: Optional[str] = None,
+        verdict: Optional[VerdictDTO] = None,
         accessed_memories: Optional[List[Memory]] = None,
         created_memories: Optional[List[Memory]] = None,
         artifact: Optional[str] = None,
@@ -140,6 +142,8 @@ class StatusCallback(ABC):
             self.status.inconsistencies = inconsistencies
         if hasattr(self.status, "improvement"):
             self.status.improvement = improvement
+        if hasattr(self.status, "verdict"):
+            self.status.verdict = verdict
         if hasattr(self.status, "accessed_memories"):
             self.status.accessed_memories = (
                 [MemoryDTO.from_memory(memory) for memory in accessed_memories]
@@ -170,6 +174,8 @@ class StatusCallback(ABC):
             self.status.suggestions = None
         if hasattr(self.status, "inconsistencies"):
             self.status.inconsistencies = None
+        if hasattr(self.status, "verdict"):
+            self.status.verdict = None
         if hasattr(self.status, "accessed_memories"):
             self.status.accessed_memories = None
         if hasattr(self.status, "created_memories"):
@@ -189,7 +195,7 @@ class StatusCallback(ABC):
         self.stage.message = message
         self.status.result = None
         if hasattr(self.status, "suggestions"):
-            self.status.suggestions = None
+            self.status.suggestions = None # TODO: see if everything works without setting verdict to None here
         self.status.tokens = tokens or self.status.tokens
         # Set all subsequent stages to SKIPPED if an error occurs
         rest_of_index = (
@@ -224,7 +230,7 @@ class StatusCallback(ABC):
         self.stage.message = message
         self.status.result = None
         if hasattr(self.status, "suggestions"):
-            self.status.suggestions = None
+            self.status.suggestions = None  # TODO: see if everything works without setting verdict to None here
         next_stage = self.get_next_stage()
         if next_stage is not None:
             self.stage = next_stage
@@ -470,7 +476,7 @@ class TutorSuggestionCallback(StatusCallback):
 
 
 class PromptUserStatusCallback(StatusCallback):
-    """Status callback for prompt user pipelines."""
+    """Status callback for prompt user pipeline."""
 
     def __init__(
             self, run_id: str, base_url: str, initial_stages: List[StageDTO] = None
@@ -484,7 +490,7 @@ class PromptUserStatusCallback(StatusCallback):
             StageDTO(
                 weight=30,
                 state=StageStateEnum.NOT_STARTED,
-                name="Checking available information",
+                name="Assessing Answer",
             ),
             StageDTO(
                 weight=10, state=StageStateEnum.NOT_STARTED, name="Thinking of question"
