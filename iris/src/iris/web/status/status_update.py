@@ -195,7 +195,9 @@ class StatusCallback(ABC):
         self.stage.message = message
         self.status.result = None
         if hasattr(self.status, "suggestions"):
-            self.status.suggestions = None # TODO: see if everything works without setting verdict to None here
+            self.status.suggestions = None
+        if hasattr(self.status, "verdict"):
+            self.status.verdict = None
         self.status.tokens = tokens or self.status.tokens
         # Set all subsequent stages to SKIPPED if an error occurs
         rest_of_index = (
@@ -230,7 +232,9 @@ class StatusCallback(ABC):
         self.stage.message = message
         self.status.result = None
         if hasattr(self.status, "suggestions"):
-            self.status.suggestions = None  # TODO: see if everything works without setting verdict to None here
+            self.status.suggestions = None
+        if hasattr(self.status, "verdict"):
+            self.status.verdict = None
         next_stage = self.get_next_stage()
         if next_stage is not None:
             self.stage = next_stage

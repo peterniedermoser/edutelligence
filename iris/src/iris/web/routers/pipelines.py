@@ -17,7 +17,7 @@ from iris.domain import (
 from iris.domain.chat.lecture_chat.lecture_chat_pipeline_execution_dto import (
     LectureChatPipelineExecutionDTO,
 )
-from iris.domain.chat.prompt_user_chat.prompt_user_chat_pipeline_execution_dto import PromptUserChatPipelineExecutionDTO
+from iris.domain.chat.prompt_user_chat.prompt_user_chat_pipeline_execution_dto import PromptUserPipelineExecutionDTO
 from iris.domain.communication.communication_tutor_suggestion_pipeline_execution_dto import (
     CommunicationTutorSuggestionPipelineExecutionDTO,
 )
@@ -55,7 +55,7 @@ from iris.web.status.status_update import (
     LectureChatCallback,
     RewritingCallback,
     TextExerciseChatCallback,
-    TutorSuggestionCallback,
+    TutorSuggestionCallback, PromptUserStatusCallback,
 )
 from iris.web.utils import validate_pipeline_variant
 
@@ -396,19 +396,19 @@ def run_communication_tutor_suggestions_pipeline(
 
 
 def run_prompt_user_pipeline_worker(
-        dto: PromptUserChatPipelineExecutionDTO,
+        dto: PromptUserPipelineExecutionDTO,
         variant_id: str,
         event: str | None = None,
 ):
     try:
-        callback = PrompUserStatusCallback(
+        callback = PromptUserStatusCallback(
             run_id=dto.settings.authentication_token,
             base_url=dto.settings.artemis_base_url,
             initial_stages=dto.initial_stages,
         )
         pipeline = PromptUserAgentPipeline()
     except Exception as e:
-        logger.error("Error preparing exercise chat pipeline: %s", e)
+        logger.error("Error preparing prompt user pipeline: %s", e)
         logger.error(traceback.format_exc())
         capture_exception(e)
         return
@@ -434,8 +434,8 @@ def run_prompt_user_pipeline_worker(
 )
 def run_prompt_user_pipeline(
         event: str | None = Query(None, description="Event query parameter"),
-        dto: ExerciseChatPipelineExecutionDTO = Body(
-            description="Exercise Chat Pipeline Execution DTO"
+        dto: PromptUserPipelineExecutionDTO = Body(
+            description="Prompt User Pipeline Execution DTO"
         ),
 ):
     variant = validate_pipeline_variant(dto.settings, ExerciseChatAgentPipeline)
@@ -499,6 +499,10 @@ def get_pipeline(feature: str) -> list[FeatureDTO]:
         case "TUTOR_SUGGESTION":
             return get_available_variants(
                 TutorSuggestionPipeline.get_variants(), available_llms
+            )
+        case "PROMPT_USER":
+            return get_available_variants(
+                PromptUserAgentPipeline.get_variants(), available_llms
             )
         case _:
             raise HTTPException(
