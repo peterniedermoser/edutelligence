@@ -486,7 +486,7 @@ class PromptUserStatusCallback(StatusCallback):
             self, run_id: str, base_url: str, initial_stages: List[StageDTO] = None
     ):
         url = (
-            f"{base_url}/{self.api_url}/programming-exercise-prompt-user/runs/{run_id}/status"
+            f"{base_url}/{self.api_url}/prompt-user/runs/{run_id}/status"
         )
         current_stage_index = len(initial_stages) if initial_stages else 0
         stages = initial_stages or []
