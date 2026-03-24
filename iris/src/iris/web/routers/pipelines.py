@@ -405,6 +405,7 @@ def run_prompt_user_pipeline_worker(
             run_id=dto.settings.authentication_token,
             base_url=dto.settings.artemis_base_url,
             initial_stages=dto.initial_stages,
+            event= event
         )
         pipeline = PromptUserAgentPipeline()
     except Exception as e:

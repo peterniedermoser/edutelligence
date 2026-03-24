@@ -483,10 +483,10 @@ class PromptUserStatusCallback(StatusCallback):
     """Status callback for prompt user pipeline."""
 
     def __init__(
-            self, run_id: str, base_url: str, initial_stages: List[StageDTO] = None
+            self, run_id: str, base_url: str, initial_stages: List[StageDTO] = None, event: str | None = None
     ):
         url = (
-            f"{base_url}/{self.api_url}/prompt-user/runs/{run_id}/status"
+            f"{base_url}/{self.api_url}/prompt-user/runs/{run_id}/status/{event if event is not None else ''}"
         )
         current_stage_index = len(initial_stages) if initial_stages else 0
         stages = initial_stages or []
