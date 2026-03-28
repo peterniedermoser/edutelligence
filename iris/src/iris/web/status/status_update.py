@@ -81,6 +81,8 @@ class StatusCallback(ABC):
                 json=self.status.model_dump(by_alias=True),
                 timeout=200,
             ).raise_for_status()
+
+            logger.info("\n\nStatus update sent to URL: {}\n\n", self.url)
         except requests.exceptions.RequestException as e:
             logger.error("Error sending status update: %s", e)
             capture_exception(e)
@@ -486,7 +488,7 @@ class PromptUserStatusCallback(StatusCallback):
             self, run_id: str, base_url: str, initial_stages: List[StageDTO] = None, event: str | None = None
     ):
         url = (
-            f"{base_url}/{self.api_url}/prompt-user/runs/{run_id}/status/{event if event is not None else ''}"
+            f"{base_url}/{self.api_url}/prompt-user/runs/{run_id}/status{('/' + event) if event is not None else ''}"
         )
         current_stage_index = len(initial_stages) if initial_stages else 0
         stages = initial_stages or []
