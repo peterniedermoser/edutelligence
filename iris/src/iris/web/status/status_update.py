@@ -81,8 +81,6 @@ class StatusCallback(ABC):
                 json=self.status.model_dump(by_alias=True),
                 timeout=200,
             ).raise_for_status()
-
-            logger.info("\n\nStatus update sent to URL: {}\n\n", self.url)
         except requests.exceptions.RequestException as e:
             logger.error("Error sending status update: %s", e)
             capture_exception(e)
