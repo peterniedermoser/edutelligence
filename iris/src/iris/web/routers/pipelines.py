@@ -422,6 +422,7 @@ def run_prompt_user_pipeline_worker(
             raise ValueError(f"Unknown variant: {variant_id}")
 
         pipeline(dto=dto, variant=variant, callback=callback, event=event)
+
     except Exception as e:
         logger.error("Error running prompt user pipeline: %s", e)
         logger.error(traceback.format_exc())
