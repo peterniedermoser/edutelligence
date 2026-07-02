@@ -5,6 +5,7 @@ from typing import List
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, status
 from sentry_sdk import capture_exception
+from concurrent.futures import ThreadPoolExecutor
 
 from iris.dependencies import TokenValidator
 from iris.domain import (
@@ -62,6 +63,9 @@ from iris.web.utils import validate_pipeline_variant
 router = APIRouter(prefix="/api/v1/pipelines", tags=["pipelines"])
 logger = logging.getLogger(__name__)
 
+
+# This is used to keep prompt user outputs in order (needed for tab-defocus and timer events to show after output that is already being generated)
+prompt_user_executor = ThreadPoolExecutor(max_workers=1)
 
 def run_exercise_chat_pipeline_worker(
     dto: ExerciseChatPipelineExecutionDTO,
@@ -441,11 +445,13 @@ def run_prompt_user_pipeline(
         ),
 ):
     variant = validate_pipeline_variant(dto.settings, PromptUserAgentPipeline)
-    thread = Thread(
-        target=run_prompt_user_pipeline_worker,
-        args=(dto, variant, event),
+
+    prompt_user_executor.submit(
+        run_prompt_user_pipeline_worker,
+        dto,
+        variant,
+        event,
     )
-    thread.start()
 
 
 @router.get("/{feature}/variants")
