@@ -494,11 +494,8 @@ class PromptUserStatusCallback(StatusCallback):
             StageDTO(
                 weight=30,
                 state=StageStateEnum.NOT_STARTED,
-                name="Assessing Answer",
-            ),
-            StageDTO(
-                weight=10, state=StageStateEnum.NOT_STARTED, name="Thinking of question"
-            ),
+                name="Thinking",
+            )
         ]
         status = PromptUserChatStatusUpdateDTO(stages=stages, event=event)
         stage = stages[current_stage_index]
